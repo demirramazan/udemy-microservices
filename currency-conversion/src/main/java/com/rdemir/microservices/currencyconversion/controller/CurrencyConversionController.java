@@ -2,6 +2,7 @@ package com.rdemir.microservices.currencyconversion.controller;
 
 import com.rdemir.microservices.currencyconversion.client.CurrencyExchangeFeignClient;
 import com.rdemir.microservices.currencyconversion.model.CurrencyConversion;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +19,9 @@ public class CurrencyConversionController {
      */
     private final CurrencyExchangeFeignClient exchangeFeignClient;
 
+    @Value("${currency.exchage.url}")
+    private String currencyExchangeUrl;
+
     public CurrencyConversionController(final CurrencyExchangeFeignClient exchangeFeignClient) {
         this.exchangeFeignClient = exchangeFeignClient;
     }
@@ -30,14 +34,14 @@ public class CurrencyConversionController {
         uriVariables.put("from", from);
         uriVariables.put("to", to);
         ResponseEntity<CurrencyConversion> exchangeResponse = new RestTemplate()
-                .getForEntity("http://localhost:8000/currency-exchange/from/{from}/to/{to}", CurrencyConversion.class, uriVariables);
+                .getForEntity("http://" + currencyExchangeUrl + ":8000/currency-exchange/from/{from}/to/{to}", CurrencyConversion.class, uriVariables);
 
         CurrencyConversion currencyConversion = exchangeResponse.getBody();
 
         return new CurrencyConversion(currencyConversion.getId(), from, to, quantity,
                 currencyConversion.getConversionMultiple(),
                 currencyConversion.getConversionMultiple().multiply(BigDecimal.valueOf(quantity)),
-                currencyConversion.getEnvironment()+ " rest template");
+                currencyConversion.getEnvironment() + " rest template");
     }
 
     @GetMapping("/currency-conversion-feign/from/{from}/to/{to}/quantity/{quantity}")
@@ -50,6 +54,6 @@ public class CurrencyConversionController {
         return new CurrencyConversion(currencyConversion.getId(), from, to, quantity,
                 currencyConversion.getConversionMultiple(),
                 currencyConversion.getConversionMultiple().multiply(BigDecimal.valueOf(quantity)),
-                currencyConversion.getEnvironment()+" feign");
+                currencyConversion.getEnvironment() + " feign");
     }
 }
