@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 
 @RestController
@@ -18,9 +20,6 @@ public class CurrencyConversionController {
     /currency-conversion/from/USD/to/INR/quantity/10
      */
     private final CurrencyExchangeFeignClient exchangeFeignClient;
-
-    @Value("${currency.exchage.url}")
-    private String currencyExchangeUrl;
 
     public CurrencyConversionController(final CurrencyExchangeFeignClient exchangeFeignClient) {
         this.exchangeFeignClient = exchangeFeignClient;
@@ -34,7 +33,7 @@ public class CurrencyConversionController {
         uriVariables.put("from", from);
         uriVariables.put("to", to);
         ResponseEntity<CurrencyConversion> exchangeResponse = new RestTemplate()
-                .getForEntity("http://" + currencyExchangeUrl + ":8000/currency-exchange/from/{from}/to/{to}", CurrencyConversion.class, uriVariables);
+                .getForEntity("http://currency-exchange:8000/currency-exchange/from/{from}/to/{to}", CurrencyConversion.class, uriVariables);
 
         CurrencyConversion currencyConversion = exchangeResponse.getBody();
 
@@ -50,10 +49,14 @@ public class CurrencyConversionController {
                                                                @PathVariable Integer quantity) {
 
         CurrencyConversion currencyConversion = exchangeFeignClient.retrieveExchangeValue(from, to);
-
+        String hostName = "";
+        try {
+            hostName = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+        }
         return new CurrencyConversion(currencyConversion.getId(), from, to, quantity,
                 currencyConversion.getConversionMultiple(),
                 currencyConversion.getConversionMultiple().multiply(BigDecimal.valueOf(quantity)),
-                currencyConversion.getEnvironment() + " feign");
+                currencyConversion.getEnvironment() + " feign" + " hostname:" + hostName);
     }
 }

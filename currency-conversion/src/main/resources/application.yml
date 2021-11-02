@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: currency-conversion
+  config:
+    import: optional:configserver:http://config-server:8888
